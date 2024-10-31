@@ -19,6 +19,8 @@ class Platform:
         self.current_control_iteration = 0
         self.deactivated_positions = []
 
+        self.ttc, self.prior_ttc = np.inf, np.inf
+
     def reset_interference_parameters(self):
         for a in self.agents:
             a.motion_plan_updated_at_platform_level = False
@@ -52,7 +54,7 @@ class Platform:
         self.agents = [self.black_agent, self.yellow_agent]
 
     ## multi-agent Dijkstra ## 
-    def plan_for_interference(self):
+    def perform_halting_collision_avoidance(self):
         for a in self.agents:
             a.halt_for_interference = False
 
@@ -85,6 +87,53 @@ class Platform:
             return self.black_agent, self.yellow_agent
         else:
             return self.yellow_agent, self.black_agent
+
+    ## steering control functions ##
+    def perform_steering_collision_avoidance(self):
+        if any(a.is_undetected() for a in self.agents):
+            return
+                
+        if all(agent.is_not_moving() for agent in self.agents):
+            return
+        
+        i = self.current_control_iteration
+        ego, obs = self.black_agent, self.yellow_agent
+        ref = self.idx_to_grid(ego.ref_trajectory[i])
+
+        rho = np.linalg.norm(ego.position - obs.position)
+        los = np.arctan2((obs.position[1] - ego.position[1]), (obs.position[0] - ego.position[0]))
+        psi = np.arctan2((ref[1] - obs.position[1]), (ref[0] - obs.position[0]))
+        self.eta = (np.pi/2) + los - psi
+
+        ego_x_dot, ego_y_dot, obs_x_dot, obs_y_dot = self.calc_relative_velocities(ego, obs)
+        rho_dot = ((obs_x_dot - ego_x_dot) + (obs_y_dot - ego_y_dot)) / rho
+        self.ttc = abs(rho / rho_dot)
+
+        print("eta: ", self.eta, "ttc: ", self.ttc)
+        ego.evade_by_steering()
+
+    def evade_by_steering(self):
+        if np.isinf(self.ttc) or self.ttc > self.prior_ttc:
+            return
+        
+        pass
+
+    def calc_relative_velocities(self, ego, obs):
+        if ego.is_not_moving():
+            ego_x_dot = 0
+            ego_y_dot = 0
+        else:
+            ego_x_dot = (ego.position[0] - ego.prior_position[0]) / DEFAULT_ACTUATION_DURATION
+            ego_y_dot = (ego.position[1] - ego.prior_position[1]) / DEFAULT_ACTUATION_DURATION
+        
+        if obs.is_not_moving():
+            obs_x_dot = 0
+            obs_y_dot = 0
+        else:
+            obs_x_dot = (obs.position[0] - obs.prior_position[0]) / DEFAULT_ACTUATION_DURATION
+            obs_y_dot = (obs.position[1] - obs.prior_position[1]) / DEFAULT_ACTUATION_DURATION
+
+        return ego_x_dot, ego_y_dot, obs_x_dot, obs_y_dot
     
     ## initializer functions ##
     def generate_meshgrids(self):
@@ -138,7 +187,7 @@ class Platform:
                 A[current_idx, current_idx] = 0
 
         self.initial_adjacency_matrix = A
-
+    
     ## helper functions ###
 
     def idx_to_grid(self, idx):

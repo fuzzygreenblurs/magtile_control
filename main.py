@@ -27,11 +27,16 @@ if __name__ == '__main__':
             
             platform.reset_interference_parameters()
             platform.update_agent_positions()
-            platform.plan_for_interference()
+
+            if CONTROL_MODE == "HALT":
+                platform.perform_halting_collision_avoidance()
+            else:
+                platform.perform_steering_collision_avoidance()
+
             asyncio.run(platform.advance_agents())
 
             plotter.update_plot()
-            # time.sleep(1)
+            time.sleep(1)
             i += 1
 
         # plt.ioff()  # Turn off interactive mode when done

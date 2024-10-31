@@ -17,6 +17,8 @@ class Agent:
         try:            
             self.platform = platform
             self.color = color
+            self.position = np.array([])
+
             if OPERATION_MODE == "LIVE":
                 self.position = np.array([OUT_OF_RANGE, OUT_OF_RANGE])
             
@@ -131,8 +133,16 @@ class Agent:
     
     def is_undetected(self):
         return np.any(self.position == OUT_OF_RANGE)
+    
+    def is_not_moving(self):
+        return np.array_equal(self.position, self.prior_position)
 
     def update_position(self, new_position):
+        if not np.any(self.position):
+            self.prior_position = new_position            
+        else:
+            self.prior_position = self.position
+
         self.position = self.__coerce_position(new_position)
         # print(f"{self.color}: new position: {self.position}, new_position: {self.platform.grid_to_idx(*self.position)}")
 
