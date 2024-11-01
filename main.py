@@ -23,20 +23,22 @@ if __name__ == '__main__':
             print(f"\n--- control loop: {i} ----")
             platform.current_control_iteration = i  
 
-            print("BLACK input trajectory: ", platform.black_agent.input_trajectory[i:i+10])
+            # print("BLACK input trajectory: ", platform.black_agent.input_trajectory[i:i+10])
             
             platform.reset_interference_parameters()
             platform.update_agent_positions()
 
-            if CONTROL_MODE == "HALT":
+            if CONTROL_MODE == "HALTING":
                 platform.perform_halting_collision_avoidance()
-            else:
+            elif CONTROL_MODE == "STEERING":
                 platform.perform_steering_collision_avoidance()
+            else:
+                raise "invalid control strategy: ['HALTING', 'STEERING']"
 
             asyncio.run(platform.advance_agents())
 
             plotter.update_plot()
-            time.sleep(1)
+            time.sleep(0.3)
             i += 1
 
         # plt.ioff()  # Turn off interactive mode when done

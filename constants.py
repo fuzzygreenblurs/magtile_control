@@ -12,13 +12,18 @@ OPERATION_MODE = "SIMULATION" # OPTIONS: "SIMULATION" or "LIVE"
 ########## OPERATION MODES #############
 
 ########## CONTROL MODES #############
+# CONTROL_MODE = "HALTING" # OPTIONS: "HALTING" or "STEERING"
 CONTROL_MODE = "STEERING" # OPTIONS: "HALTING" or "STEERING"
 ALPHA_STEERING = 1
-BETA_STEERING = 1
+BETA_STEERING = 0.1
 ########## CONTROL MODES #############
 
 ########## INITIAL STATES #############
-SIMULATED_INITIAL_YELLOW_POSITION = np.array([1, -3])            # in cartesian coordinates
+# SIMULATED_INITIAL_BLACK_POSITION = np.array([1, -3])            # in cartesian coordinates
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-6, -5])          # in cartesian coordinates
+
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-2, -1])            # in cartesian coordinates
+SIMULATED_INITIAL_YELLOW_POSITION = np.array([2, 3])            # in cartesian coordinates
 SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])          # in cartesian coordinates
 ########## INITIAL STATES #############
 
@@ -26,7 +31,7 @@ SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])          # in cartesian co
 
 # experiment 0: steering based
 BLACK_ORBIT = [13]
-YELLOW_ORBIT = [77]
+YELLOW_ORBIT = [69]
 
 # experiment 1: two octagon trajectories
 # BLACK_ORBIT = [16, 17, 32, 31]

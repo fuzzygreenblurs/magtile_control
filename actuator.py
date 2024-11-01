@@ -6,7 +6,7 @@ from constants import *
 class Actuator:
     def __init__(self, port, baudrate=115200, timeout=1):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
-        time.sleep(1)  # Wait for Arduino to reset
+        time.sleep(timeout)  # Wait for Arduino to reset
         self._clear_initial_message()  # Clear the "Command Line Terminal Ready" message
         self.scan_addresses()  # Perform initial scan
 

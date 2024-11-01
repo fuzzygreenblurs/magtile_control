@@ -90,6 +90,9 @@ class Platform:
 
     ## steering control functions ##
     def perform_steering_collision_avoidance(self):
+        if self.current_control_iteration == 0:
+            return
+
         if any(a.is_undetected() for a in self.agents):
             return
                 
@@ -97,41 +100,95 @@ class Platform:
             return
         
         i = self.current_control_iteration
-        ego, obs = self.black_agent, self.yellow_agent
-        ref = self.idx_to_grid(ego.ref_trajectory[i])
+        self.ego, self.obs = self.black_agent, self.yellow_agent
+        ref = self.idx_to_grid(self.ego.ref_trajectory[i])
 
-        rho = np.linalg.norm(ego.position - obs.position)
-        los = np.arctan2((obs.position[1] - ego.position[1]), (obs.position[0] - ego.position[0]))
-        psi = np.arctan2((ref[1] - obs.position[1]), (ref[0] - obs.position[0]))
-        self.eta = (np.pi/2) + los - psi
+        rho = round(np.linalg.norm(self.ego.position - self.obs.position), 3)
 
-        ego_x_dot, ego_y_dot, obs_x_dot, obs_y_dot = self.calc_relative_velocities(ego, obs)
-        rho_dot = ((obs_x_dot - ego_x_dot) + (obs_y_dot - ego_y_dot)) / rho
-        self.ttc = abs(rho / rho_dot)
+        if rho == 0:
+            print("COLLISION DETECTED.")
+
+        self.los = np.arctan2((self.obs.position[1] - self.ego.position[1]), (self.obs.position[0] - self.ego.position[0]))
+        psi = np.arctan2((ref[1] - self.obs.position[1]), (ref[0] - self.obs.position[0]))
+        self.eta = round((np.pi/2) + self.los - psi, 3)
+
+        ego_x_dot, ego_y_dot, obs_x_dot, obs_y_dot = self.calc_relative_velocities()
+        rho_dot = round((abs((obs_x_dot - ego_x_dot)) + abs((obs_y_dot - ego_y_dot))) / rho, 3)
+        print("rho: ",rho, "rho_dot: ", rho_dot)
+        # print("velocities: ", ego_x_dot, ego_y_dot, obs_x_dot, obs_y_dot)
+        self.ttc = round(abs(rho / rho_dot), 3)
 
         print("eta: ", self.eta, "ttc: ", self.ttc)
-        ego.evade_by_steering()
+        self.evade_by_steering()
+
+        self.prior_ttc = self.ttc
 
     def evade_by_steering(self):
-        if np.isinf(self.ttc) or self.ttc > self.prior_ttc:
+        # print("ttc: ", self.ttc, "prior_ttc: ", self.prior_ttc)
+        # print("ttc is infinity: ", np.isinf(self.ttc), "ttc is unchanged: ", self.ttc == self.prior_ttc)
+        if np.isinf(self.ttc) or self.ttc >= self.prior_ttc:
+            print(f"not approaching obstacle...")
             return
+    
+        psi_ca_dot = ALPHA_STEERING * self.eta * np.exp(-BETA_STEERING * self.ttc)
         
-        pass
+        print("approaching obstacle...steering angle rate: ", psi_ca_dot)
 
-    def calc_relative_velocities(self, ego, obs):
-        if ego.is_not_moving():
+        print(self.ego.input_trajectory[0:15])
+
+        diagonal_left, perpendicular_left = self.find_evasive_position_candidates()
+
+        if psi_ca_dot > 0.5 and psi_ca_dot < 0.9:
+            print(f"go diagonal... {diagonal_left}")
+            input_step = self.current_control_iteration + 1
+            self.ego.input_trajectory[input_step] = diagonal_left
+            self.ego.motion_plan_updated_at_platform_level = True
+        elif psi_ca_dot >= 0.9:
+            print(f"go perpendicular...{perpendicular_left}")
+            input_step = self.current_control_iteration + 1
+            self.ego.input_trajectory[input_step] = perpendicular_left
+            self.ego.motion_plan_updated_at_platform_level = True
+
+    def find_evasive_position_candidates(self):
+        diagonal_left_angle = self.los + (np.pi / 4)
+        perpendicular_left_angle = self.los + (np.pi / 2)
+
+        diagonal_left = np.array([
+            max(0, min(14, int(round(self.ego.position[0] + np.cos(diagonal_left_angle))))),
+            max(0, min(14, int(round(self.ego.position[1] + np.sin(diagonal_left_angle)))))
+        ])
+
+        # diagonal_left = ([
+        #     max(0, min(14, diagonal_left[0])),
+        #     max(0, min(14, diagonal_left[1]))
+        # ])
+
+        perpendicular_left = np.array([
+            max(0, min(14, int(round(self.ego.position[0] + np.cos(perpendicular_left_angle))))),
+            max(0, min(14, int(round(self.ego.position[1] + np.sin(perpendicular_left_angle)))))
+        ])
+
+        # perpendicular_left = ([
+        #     max(0, min(14, perpendicular_left[0])),
+        #     max(0, min(14, perpendicular_left[1]))
+        # ])
+
+        return self.grid_to_idx(*diagonal_left), self.grid_to_idx(*perpendicular_left)
+        
+    def calc_relative_velocities(self):
+        if self.ego.is_not_moving():
             ego_x_dot = 0
             ego_y_dot = 0
         else:
-            ego_x_dot = (ego.position[0] - ego.prior_position[0]) / DEFAULT_ACTUATION_DURATION
-            ego_y_dot = (ego.position[1] - ego.prior_position[1]) / DEFAULT_ACTUATION_DURATION
+            ego_x_dot = (self.ego.position[0] - self.ego.prior_position[0]) / DEFAULT_ACTUATION_DURATION
+            ego_y_dot = (self.ego.position[1] - self.ego.prior_position[1]) / DEFAULT_ACTUATION_DURATION
         
-        if obs.is_not_moving():
+        if self.obs.is_not_moving():
             obs_x_dot = 0
             obs_y_dot = 0
         else:
-            obs_x_dot = (obs.position[0] - obs.prior_position[0]) / DEFAULT_ACTUATION_DURATION
-            obs_y_dot = (obs.position[1] - obs.prior_position[1]) / DEFAULT_ACTUATION_DURATION
+            obs_x_dot = (self.obs.position[0] - self.obs.prior_position[0]) / DEFAULT_ACTUATION_DURATION
+            obs_y_dot = (self.obs.position[1] - self.obs.prior_position[1]) / DEFAULT_ACTUATION_DURATION
 
         return ego_x_dot, ego_y_dot, obs_x_dot, obs_y_dot
     
