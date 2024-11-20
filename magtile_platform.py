@@ -6,6 +6,11 @@ from agent import Agent
 from agent_color import AgentColor
 from constants import *
 
+class CollisionException(Exception):
+    def __init__(self):
+        self.message = "\n********\nALERT: COLLISION DETECTED!!!\n********"
+        super().__init__(self.message)
+
 class Platform:
     def __init__(self, ipc_client=None): 
         if OPERATION_MODE == "LIVE" and ipc_client == None:
@@ -21,6 +26,14 @@ class Platform:
 
         self.ttc, self.prior_ttc = np.inf, np.inf
 
+    def alert_if_collision(self):
+        # try:
+        if np.linalg.norm(self.black_agent.position - self.yellow_agent.position) <= FIELD_RANGE:
+            raise CollisionException
+        # except CollisionException as e:
+        #     print(e.message)
+        #     pdb.set_trace()
+    
     def reset_interference_parameters(self):
         for a in self.agents:
             a.motion_plan_updated_at_platform_level = False
@@ -29,6 +42,9 @@ class Platform:
         self.deactivated_positions = []
 
     async def advance_agents(self):
+        for a in self.agents:
+            print(a.color, self.idx_to_grid(a.input_trajectory[self.current_control_iteration+1]))
+        
         await asyncio.gather(*[a.advance() for a in self.agents])
 
     def update_agent_positions(self):
@@ -61,14 +77,13 @@ class Platform:
         if any(a.is_undetected() for a in self.agents):
             return
         
-        # if all(a.is_close_to_reference() for a in self.agents):
-        #     return
+        if all(a.is_close_to_reference() for a in self.agents):
+            return
         
         i = self.current_control_iteration
 
         primary, secondary = self.prioritized_agents()
         if np.linalg.norm(primary.position - secondary.position) <= INTERFERENCE_RANGE:
-            print("within interference range...")
             primary.halt_for_interference = True
             primary_position_idx = self.grid_to_idx(*primary.position)
 
@@ -79,21 +94,27 @@ class Platform:
             primary.halt_for_interference = False
 
     def prioritized_agents(self):
-        self.agents_far_far = False
-
         if self.yellow_agent.is_close_to_reference() and not self.black_agent.is_close_to_reference():
+            self.yellow_agent.is_primary = True
+            self.black_agent.is_primary = False
             return self.yellow_agent, self.black_agent
         elif self.black_agent.is_close_to_reference() and not self.yellow_agent.is_close_to_reference():
+            self.black_agent.is_primary = True
+            self.yellow_agent.is_primary = False
             return self.black_agent, self.yellow_agent
         else:
+            self.yellow_agent.is_primary = True
+            self.black_agent.is_primary = False
             return self.yellow_agent, self.black_agent
 
     ## steering control functions ##
     def perform_steering_collision_avoidance(self):
+        print("PERFORMING STEERING AVOIDANCE...")
         if self.current_control_iteration == 0:
             return
 
         if any(a.is_undetected() for a in self.agents):
+            print("atleast one agent is undetected... ignoring steering collision avoidance.")
             return
                 
         if all(agent.is_not_moving() for agent in self.agents):
@@ -104,9 +125,6 @@ class Platform:
         ref = self.idx_to_grid(self.ego.ref_trajectory[i])
 
         rho = round(np.linalg.norm(self.ego.position - self.obs.position), 3)
-
-        if rho == 0:
-            print("COLLISION DETECTED.")
 
         self.los = np.arctan2((self.obs.position[1] - self.ego.position[1]), (self.obs.position[0] - self.ego.position[0]))
         psi = np.arctan2((ref[1] - self.obs.position[1]), (ref[0] - self.obs.position[0]))
@@ -130,8 +148,8 @@ class Platform:
             print(f"not approaching obstacle...")
             return
     
-        psi_ca_dot = ALPHA_STEERING * self.eta * np.exp(-BETA_STEERING * self.ttc)
         
+        psi_ca_dot = ALPHA_STEERING * self.eta * np.exp(-BETA_STEERING * self.ttc)
         print("approaching obstacle...steering angle rate: ", psi_ca_dot)
 
         print(self.ego.input_trajectory[0:15])
@@ -198,6 +216,7 @@ class Platform:
 
         x_lower, x_upper = -(GRID_WIDTH - 1) / 2, (GRID_WIDTH - 1) / 2
         x_range = np.linspace(x_lower, x_upper, GRID_WIDTH) * COIL_SPACING
+
         y_lower, y_upper = -(GRID_WIDTH - 1) / 2, (GRID_WIDTH - 1) / 2
         y_range = np.linspace(y_upper, y_lower, GRID_WIDTH) * COIL_SPACING
         self.cartesian_grid_x, self.cartesian_grid_y = np.meshgrid(x_range, y_range)

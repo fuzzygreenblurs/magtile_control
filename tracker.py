@@ -5,6 +5,7 @@ import json
 import numpy as np
 import sys
 import time
+from datetime import datetime
 from constants import *
 
 # Socket
@@ -15,11 +16,23 @@ CHANNEL = "positions"
 r = redis.Redis(host='localhost', port=6379, db=0)
 stream_name = 'stream_positions'
 
+STORE_POSITION = False
+if len(sys.argv) > 1:
+    if sys.argv[1] == "--store-trial":
+        STORE_POSITION = True
+        FILE_NAME = f"{EXPERIMENT_NAME}_{datetime.now().strftime("%H%M%S")}.csv"
+
+print("store time-series: ", STORE_POSITION)
+
 # Calibration and conversion constants
-MIN_X_PIX = 295
-MAX_X_PIX = 1230
-MIN_Y_PIX = 160
-MAX_Y_PIX = 1080
+# MIN_X_PIX = 285
+# MAX_X_PIX = 1230
+# MIN_Y_PIX = 200
+# MAX_Y_PIX = 1080
+MIN_X_PIX = 300
+MAX_X_PIX = 1320
+MIN_Y_PIX = 65
+MAX_Y_PIX = 1030
 
 SIZE_IN_CM = 30.1625
 SIZE_IN_PIX_X = MAX_X_PIX - MIN_X_PIX
@@ -46,6 +59,8 @@ min_contour_area = 100
 max_contour_area = 10000
 
 def publish_position(writer):
+    global start_time
+
     background_frame = None
     cap = cv2.VideoCapture(0)
 
@@ -118,19 +133,22 @@ def publish_position(writer):
             cv2.putText(frame, "Yellow object detected", (x, y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
 
         payload = {
-            "timestamp": str(time.time()),  # Store as a string
-            "yellow": json.dumps(yellow_pos),  # Serialize complex data as a string
-            "black": json.dumps(black_pos)  # Serialize complex data as a string
+            "timestamp": round(time.time() - start_time, 3),
+            "yellow": json.dumps(yellow_pos),
+            "black": json.dumps(black_pos)
         }
 
-        # Add the payload to the Redis Stream
         if payload:
             r.xadd("stream_positions", payload)
-            writer.writerow([payload["timestamp"], black_pos[0], black_pos[1], yellow_pos[0], yellow_pos[1]])
+            if STORE_POSITION:
+                print([payload["timestamp"], black_pos[0], black_pos[1], yellow_pos[0], yellow_pos[1]])
+                writer.writerow([payload["timestamp"], black_pos[0], black_pos[1], yellow_pos[0], yellow_pos[1]])
 
         # print and display latest position and frame for diagnostics
-        # sys.stdout.write(f"\r black (in): ({to_in(black_pos[0])}, {to_in(black_pos[1])})")
+        # sys.stdout.write(f"\r blk (in): ({to_in(black_pos[0])}, {to_in(black_pos[1])})")
+        # sys.stdout.write(f"\r ylw (in): ({to_in(yellow_pos[0])}, {to_in(yellow_pos[1])})")
         # sys.stdout.write(f"\r Yellow: ({yellow_pos[0]}, {yellow_pos[1]}), cm: ({to_in(yellow_pos[0])}, {to_in(yellow_pos[1])})")
+        # sys.stdout.write(f"\r Black: ({black_pos[0]}, {black_pos[1]}) cm: ({to_in(black_pos[0])}, {to_in(black_pos[1])}), Yellow: ({yellow_pos[0]}, {yellow_pos[1]}), cm: ({to_in(yellow_pos[0])}, {to_in(yellow_pos[1])})")
         # sys.stdout.write(f"\r Black: ({black_pos[0]}, {black_pos[1]}) cm: ({to_in(black_pos[0])}, {to_in(black_pos[1])}), Yellow: ({yellow_pos[0]}, {yellow_pos[1]}), cm: ({to_in(yellow_pos[0])}, {to_in(yellow_pos[1])})")
         sys.stdout.flush()
         cv2.imshow('Frame', frame)
@@ -147,7 +165,8 @@ def to_in(cm):
     return round(cm * 0.393701, 2)
 
 if __name__ == "__main__":
-    with open('concentric_loop_positions.csv', mode='w', newline='') as file:
+    start_time = time.time()
+    with open(f"final_data/time_series/{FILE_NAME}", mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Timestamp', 'black_x', 'black_y', 'yellow_x', 'yellow_y'])
+        writer.writerow(['timestamp', 'black_x', 'black_y', 'yellow_x', 'yellow_y'])
         publish_position(writer)

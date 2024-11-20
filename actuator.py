@@ -28,13 +28,13 @@ class Actuator:
         
 
     async def actuate_single(self, row, col, duration=DEFAULT_ACTUATION_DURATION, dc=DEFAULT_DUTY_CYCLE):
-        # print(f"ON: coil_id: ({row}, {col})")
+        print(f"ON:  coil_id: {self.grid_to_idx(row, col)},  ({row}, {col})")
         
         self.set_power(row, col, dc)
         await asyncio.sleep(duration)
         self.set_power(row, col, 0)
         
-        # print(f"OFF: coil_id: ({row}, {col})")
+        print(f"OFF: coil_id: {self.grid_to_idx(row, col)}, ({row}, {col})")
 
     def stop_all(self):
         # print(f"stopping all coils...")
@@ -93,3 +93,11 @@ class Actuator:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def idx_to_grid(self, idx):
+        row = idx // GRID_WIDTH
+        col = idx % GRID_WIDTH
+        return row, col
+
+    def grid_to_idx(self, row, col):
+        return (row * GRID_WIDTH) + col

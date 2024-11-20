@@ -7,63 +7,63 @@ import math
     - [#] represents a dimensionless numerical value
 '''
 
+########## OPERATION MODE: "SIMULATION" or "LIVE" #############
+OPERATION_MODE = "SIMULATION"
+# OPERATION_MODE = "LIVE"
 ########## OPERATION MODES #############
-OPERATION_MODE = "SIMULATION" # OPTIONS: "SIMULATION" or "LIVE"
-########## OPERATION MODES #############
 
+########## AVOIDANCE STRATEGY: "HALTING" or "STEERING" #############
+CONTROL_MODE = "HALTING" 
+# CONTROL_MODE = "STEERING"
+
+# more aggressive
+# ALPHA_STEERING = 2
+# BETA_STEERING = 0.05
+
+# less aggressive
+# ALPHA_STEERING = 2
+# BETA_STEERING = 1
 ########## CONTROL MODES #############
-# CONTROL_MODE = "HALTING" # OPTIONS: "HALTING" or "STEERING"
-CONTROL_MODE = "STEERING" # OPTIONS: "HALTING" or "STEERING"
-ALPHA_STEERING = 1
-BETA_STEERING = 0.1
-########## CONTROL MODES #############
 
-########## INITIAL STATES #############
-# SIMULATED_INITIAL_BLACK_POSITION = np.array([1, -3])            # in cartesian coordinates
-# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-6, -5])          # in cartesian coordinates
+########## REFERENCE ORBITS AND INITIAL POSITIONS (cartesian coordinates) #############
+## exp 1: halting: x shape
+EXPERIMENT_NAME = "x_shape_halting"
+YELLOW_ORBIT = [33, 34, 50, 65, 79, 78, 62, 47]
+BLACK_ORBIT  = [40, 41, 57, 72, 86, 85, 69, 54]
+SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])
+SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
 
-# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-2, -1])            # in cartesian coordinates
-SIMULATED_INITIAL_YELLOW_POSITION = np.array([2, 3])            # in cartesian coordinates
-SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])          # in cartesian coordinates
-########## INITIAL STATES #############
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-4, 5])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([3, 5])
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-6, -5])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([1, -3])
 
-########## REFERENCE TRAJECTORIES #############
+## exp 2: halting: concentric circles
+# initial condition: close to reference trajectories
+# EXPERIMENT_NAME = "concentric_circles_halting"
+# YELLOW_ORBIT = [50, 51, 52, 53, 69, 85, 100, 115, 130, 145, 160, 174, 188, 187, 186, 185, 169, 153, 138, 123, 108, 93, 78, 64]
+# BLACK_ORBIT  = [96, 97, 113, 128, 142, 141, 125, 110] 
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-2, 3])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([0, 0])
 
-# experiment 0: steering based
-BLACK_ORBIT = [13]
-YELLOW_ORBIT = [69]
+## exp 3: steering: static obstacle
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-7, 7])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([-7, -7])
 
-# experiment 1: two octagon trajectories
-# BLACK_ORBIT = [16, 17, 32, 31]
-# YELLOW_ORBIT  = [27, 28, 43, 42]
+# exp 4 alt: steering: intersection dynamic obstacle
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-6, 1])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([2, 5])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([5, 4])
+# BLACK_ORBIT = [183]
+# BLACK_ORBIT = [196]
+# YELLOW_ORBIT = [156]
 
-# YELLOW_ORBIT = [33, 34, 50, 65, 79, 78, 62, 47]
-# BLACK_ORBIT  = [40, 41, 57, 72, 86, 85, 69, 54]
-
-# YELLOW_ORBIT = [40, 41, 57, 72, 86, 85, 69, 54]
-# BLACK_ORBIT  = [48, 63, 79, 80, 66, 51, 35, 34]
-
-# experiment 2: two concentric octagons (check 1 coil and 2 coil range)
-# YELLOW_ORBIT = [112, 97, 81, 80, 94, 109, 125, 126]
-# YELLOW_TRAJECTORY = [idx for idx in YELLOW_ORBIT for _ in range(2)]
-# BLACK_ORBIT  = [107, 122, 138, 154, 155, 156, 157, 143, 129, 114, 99, 84, 68, 52, 51, 50, 49, 63, 77, 92] 
-# BLACK_ORBIT  = [65, 66, 82, 98, 113, 127, 141, 140, 124, 108, 93, 79]
-
-# # experiment 3: two intersecting infinity trajectories
-# YELLOW_ORBIT = [63, 64, 65, 66, 82, 97, 112, 128, 143, 158, 174, 175, 176, 177, 163, 148, 133, 118, 103, 88, 72, 71, 70, 69, 83, 98, 113, 127, 142, 157, 171, 170, 169, 168, 152, 137, 122, 107, 92, 77]
-# BLACK_ORBIT  = [94, 95, 111, 112, 128, 129, 145, 146, 131, 116, 111, 110, 114, 113, 127, 126, 140, 139, 124, 109]
-
-# BLACK_ORBIT            = [112, 97, 81, 80, 94, 109, 125, 126]
-# YELLOW_ORBIT           = [26, 27, 42, 41]
-# BLACK_ORBIT            = [112, 112, 97, 97, 81, 81, 80, 80, 94, 94, 109, 109, 125, 125, 126, 126]
-# YELLOW_ORBIT           = [26, 26, 27, 27, 42, 42, 41, 41]
-
-# YELLOW_ORBIT          = [112, 112, 112, 97, 97, 97, 81, 81, 81, 80, 80, 80, 94, 94, 94, 109, 109, 109, 125, 125, 125, 126, 126, 126]
-# BLACK_ORBIT           = [26, 26, 26, 27, 27, 27]
-# # YELLOW_ORBIT          = [112, 97, 81, 80, 94, 109, 125, 126]
-# # BLACK_ORBIT           = [117, 102, 88, 89, 105, 120, 134, 133]
-########## REFERENCE TRAJECTORIES #############
-
+# # exp 4: steering: x-shape dynamic obstacle
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-7, 7])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([-7, -7])
+# BLACK_ORBIT = [27]
+# YELLOW_ORBIT = [224]
+########## REFERENCE ORBITS AND INITIAL POSITIONS (cartesian coordinates) #############
 
 ########## EXPERIMENT PARAMETERS #############
 REF_TRAJECTORY_PERIOD = 200                                                     # total time period [sec]
@@ -77,7 +77,7 @@ COIL_SPACING          = 2.159                                                   
 COERSION_THRESHOLD_IN = 0.4                                                     # a sampled position within this threshold of a coil could be coerced to coil centroid position [in]
 SAMPLING_PERIOD       = 0.1                                                     # time between camera readings [sec]
 
-FIELD_RANGE                = 3.5                                                # magnetic force range [cm]
+FIELD_RANGE                = math.sqrt(2)                                       # magnetic force range (discretized to 1 diagonal grid position separation)
 OUT_OF_RANGE               = -1000000
 COERSION_THRESHOLD         = COERSION_THRESHOLD_IN * 2.54                       # coersion threshold [cm]
 DEACTIVATION_RADIUS        = math.sqrt(2)                                       # [# of diagonals]
@@ -89,7 +89,7 @@ INVALIDATED_NODE_WEIGHT    = np.inf
 POSITIONS_STREAM = 'stream_positions'
 
 # actuator parameters
-DEFAULT_ACTUATION_DURATION = 0.5
+DEFAULT_ACTUATION_DURATION = 0.3
 DEFAULT_DUTY_CYCLE         = 4095
 ACTUATOR_PORT = "/dev/cu.usbmodem21301"
 

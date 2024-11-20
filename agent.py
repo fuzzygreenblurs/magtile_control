@@ -3,6 +3,7 @@ import math
 import numpy as np
 import networkx as nx
 import pdb
+import time
 from agent_color import AgentColor
 from constants import *
 
@@ -18,6 +19,7 @@ class Agent:
             self.platform = platform
             self.color = color
             self.position = np.array([])
+            self.is_primary = None
 
             if OPERATION_MODE == "LIVE":
                 self.position = np.array([OUT_OF_RANGE, OUT_OF_RANGE])
@@ -43,7 +45,43 @@ class Agent:
                 
         except AttributeError:
             raise AttributeError(f"The {color} agent instance failed to initialize successfully.")
+            
+    # async def advance(self):
+    #     if self.is_undetected():
+    #         return
 
+    #     if self.halt_for_interference:
+    #         print(f"{self.color}: halting...")
+    #         return
+
+    #     i = self.platform.current_control_iteration
+    #     if i < len(self.input_trajectory):
+    #         ref_position = self.platform.idx_to_grid(self.ref_trajectory[i])
+            
+    #         error = np.linalg.norm(np.array(self.position) - np.array(ref_position))
+
+    #         if error > FIELD_RANGE:
+    #             if not self.motion_plan_updated_at_platform_level:
+    #                 shortest_path = self.single_agent_shortest_path()
+    #                 self.update_motion_plan(shortest_path[:3])
+
+    #             await self.__actuate(self.input_trajectory[i])
+    #             await self.__actuate(self.input_trajectory[i + 1])
+    #         else:
+    #             if not self.motion_plan_updated_at_platform_level:
+    #                 if self.input_trajectory[i] != self.ref_trajectory[i]:
+    #                     self.update_motion_plan([self.ref_trajectory[i]])
+
+    #             await self.__actuate(self.input_trajectory[i])
+
+    def update_motion_plan(self, inputs):
+        i = self.platform.current_control_iteration
+        for s, step in enumerate(inputs):
+            input_step = i + s
+            if input_step < len(self.input_trajectory):
+                self.input_trajectory[input_step] = step
+
+    # steering control: working on sim
     async def advance(self):
         if self.is_undetected():
             return
@@ -60,33 +98,39 @@ class Agent:
             if error > FIELD_RANGE:
                 if not self.motion_plan_updated_at_platform_level:
                     shortest_path = self.single_agent_shortest_path()
-                    self.update_motion_plan(shortest_path[:4])              # set more steps (e.g., 4) to make transition smoother
+                    self.update_motion_plan(shortest_path[:3])              # set more steps (e.g., 4) to make transition smoother
 
-            await self.__actuate(self.input_trajectory[i])
-            await self.__actuate(self.input_trajectory[i+1])
+                await self.__actuate(self.input_trajectory[i+1])
+                await self.__actuate(self.input_trajectory[i+2])
+            else:
+                await self.__actuate(self.input_trajectory[i+1])
 
-    def update_motion_plan(self, inputs):
-        i = self.platform.current_control_iteration
-        for s, step in enumerate(inputs):
-            input_step = self.platform.current_control_iteration + s
-            self.input_trajectory[input_step] = inputs[s]
+    def next_position_in_deactivated_zone(self):
+        next_pos = self.input_trajectory[self.platform.current_control_iteration]
+        deactivated_positions = [self.platform.grid_to_idx(*dp) for dp in self.platform.deactivated_positions]
+        return next_pos in deactivated_positions
 
     def single_agent_shortest_path(self):
         position_idx = int(self.platform.grid_to_idx(*self.position))
         graph = nx.from_numpy_array(self.adjacency_matrix)
-        ref_position_idx = self.ref_trajectory[self.platform.current_control_iteration]
+        ref_position_idx = self.ref_trajectory[self.platform.current_control_iteration + 1]
         self.shortest_path = nx.dijkstra_path(graph, position_idx, ref_position_idx)
         return self.shortest_path
+    
+    def is_secondary(self):
+        return not self.is_primary
     
     def is_close_to_reference(self):
         i = self.platform.current_control_iteration
         ref_trajectory_position = np.array(self.platform.idx_to_grid(self.ref_trajectory[i]))
-        
-        error = np.linalg.norm(ref_trajectory_position - self.position)
-        if error <= FIELD_RANGE:
-            return True
-        
-        return False
+        return np.linalg.norm(ref_trajectory_position - self.position) <= FIELD_RANGE
+    
+        # if self.color == AgentColor.YELLOW:
+        #     pos = self.platform.grid_to_idx(*self.position)
+        #     if(pos == 51 and self.ref_trajectory[i] == 69):
+        #         pdb.set_trace()
+        #     print("yellow: ", self.platform.grid_to_idx(*self.position), self.ref_trajectory[i], "is_close: ", error <= FIELD_RANGE)
+        # return error <= FIELD_RANGE
     
     def deactivate_positions_within_radius(self, target_idx):
         target_position = self.platform.idx_to_grid(target_idx)
@@ -132,7 +176,7 @@ class Agent:
         return neighbors
     
     def is_undetected(self):
-        return np.any(self.position == OUT_OF_RANGE)
+        return np.any(self.position <= OUT_OF_RANGE)
     
     def is_not_moving(self):
         return np.array_equal(self.position, self.prior_position)
@@ -153,7 +197,8 @@ class Agent:
         elif OPERATION_MODE == "SIMULATION":
             new_position = self.platform.idx_to_grid(new_position_idx)
             self.simulated_position_at_end_of_prior_iteration = self.platform.grid_to_cartesian(*new_position)
-            # print(f"{self.color} ACTUATE: {self.simulated_position_at_end_of_prior_iteration}")
+            print(f"{self.color} ON: {new_position}")
+            print(f"{self.color} OFF: {new_position}")
 
     # TODO: coerce to the closest grid position
     def __coerce_position(self, measured_position):
@@ -163,7 +208,7 @@ class Agent:
         """
 
         #TODO: are we updating to the correct grid position from the cartesian readings?
-        if np.any(measured_position == OUT_OF_RANGE):
+        if np.any(np.array(measured_position) == OUT_OF_RANGE):
             return np.array([OUT_OF_RANGE, OUT_OF_RANGE])
         
         if OPERATION_MODE == "SIMULATION":
