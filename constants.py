@@ -27,11 +27,13 @@ CONTROL_MODE = "HALTING"
 
 ########## REFERENCE ORBITS AND INITIAL POSITIONS (cartesian coordinates) #############
 ## exp 1: halting: x shape
-EXPERIMENT_NAME = "x_shape_halting"
+# EXPERIMENT_NAME = "x_shape_halting"
 YELLOW_ORBIT = [33, 34, 50, 65, 79, 78, 62, 47]
 BLACK_ORBIT  = [40, 41, 57, 72, 86, 85, 69, 54]
-SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])
+SIMULATED_INITIAL_BLACK_POSITION = np.array([-2, -5])
 SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
+# SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])
+# SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
 
 # SIMULATED_INITIAL_YELLOW_POSITION = np.array([-4, 5])
 # SIMULATED_INITIAL_BLACK_POSITION  = np.array([3, 5])
@@ -80,7 +82,7 @@ SAMPLING_PERIOD       = 0.1                                                     
 FIELD_RANGE                = math.sqrt(2)                                       # magnetic force range (discretized to 1 diagonal grid position separation)
 OUT_OF_RANGE               = -1000000
 COERSION_THRESHOLD         = COERSION_THRESHOLD_IN * 2.54                       # coersion threshold [cm]
-DEACTIVATION_RADIUS        = math.sqrt(2)                                       # [# of diagonals]
+DEACTIVATION_RADIUS        = math.sqrt(3)                                       # [# of diagonals]
 INTERFERENCE_RANGE         = 2 * DEACTIVATION_RADIUS
 SAFE_ZONE_RADIUS           = 1
 INVALIDATED_NODE_WEIGHT    = np.inf

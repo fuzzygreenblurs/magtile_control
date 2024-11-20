@@ -198,6 +198,7 @@ class Agent:
             new_position = self.platform.idx_to_grid(new_position_idx)
             self.simulated_position_at_end_of_prior_iteration = self.platform.grid_to_cartesian(*new_position)
             print(f"{self.color} ON: {new_position}")
+            time.sleep(0.2)
             print(f"{self.color} OFF: {new_position}")
 
     # TODO: coerce to the closest grid position
