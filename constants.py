@@ -8,8 +8,8 @@ import math
 '''
 
 ########## OPERATION MODE: "SIMULATION" or "LIVE" #############
-OPERATION_MODE = "SIMULATION"
-# OPERATION_MODE = "LIVE"
+# OPERATION_MODE = "SIMULATION"
+OPERATION_MODE = "LIVE"
 ########## OPERATION MODES #############
 
 ########## AVOIDANCE STRATEGY: "HALTING" or "STEERING" #############
@@ -27,7 +27,7 @@ CONTROL_MODE = "HALTING"
 
 ########## REFERENCE ORBITS AND INITIAL POSITIONS (cartesian coordinates) #############
 ## exp 1: halting: x shape
-# EXPERIMENT_NAME = "x_shape_halting"
+EXPERIMENT_NAME = "x_shape_halting"
 YELLOW_ORBIT = [33, 34, 50, 65, 79, 78, 62, 47]
 BLACK_ORBIT  = [40, 41, 57, 72, 86, 85, 69, 54]
 SIMULATED_INITIAL_BLACK_POSITION = np.array([-2, -5])

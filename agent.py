@@ -98,12 +98,12 @@ class Agent:
             if error > FIELD_RANGE:
                 if not self.motion_plan_updated_at_platform_level:
                     shortest_path = self.single_agent_shortest_path()
-                    self.update_motion_plan(shortest_path[:3])              # set more steps (e.g., 4) to make transition smoother
+                    self.update_motion_plan(shortest_path[:2])              # set more steps (e.g., 4) to make transition smoother
 
+                await self.__actuate(self.input_trajectory[i])
                 await self.__actuate(self.input_trajectory[i+1])
-                await self.__actuate(self.input_trajectory[i+2])
             else:
-                await self.__actuate(self.input_trajectory[i+1])
+                await self.__actuate(self.input_trajectory[i])
 
     def next_position_in_deactivated_zone(self):
         next_pos = self.input_trajectory[self.platform.current_control_iteration]
