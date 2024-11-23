@@ -13,25 +13,26 @@ OPERATION_MODE = "LIVE"
 ########## OPERATION MODES #############
 
 ########## AVOIDANCE STRATEGY: "HALTING" or "STEERING" #############
-CONTROL_MODE = "HALTING" 
-# CONTROL_MODE = "STEERING"
+# CONTROL_MODE = "HALTING" 
+CONTROL_MODE = "STEERING"
 
 # more aggressive
-# ALPHA_STEERING = 2
-# BETA_STEERING = 0.05
+ALPHA_STEERING = 3
+BETA_STEERING = 0.03
 
 # less aggressive
 # ALPHA_STEERING = 2
-# BETA_STEERING = 1
+# BETA_STEERING = 0.08
+
 ########## CONTROL MODES #############
 
 ########## REFERENCE ORBITS AND INITIAL POSITIONS (cartesian coordinates) #############
 ## exp 1: halting: x shape
-EXPERIMENT_NAME = "x_shape_halting"
-YELLOW_ORBIT = [33, 34, 50, 65, 79, 78, 62, 47]
-BLACK_ORBIT  = [40, 41, 57, 72, 86, 85, 69, 54]
-SIMULATED_INITIAL_BLACK_POSITION = np.array([-2, -5])
-SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
+# EXPERIMENT_NAME = "x_shape_halting"
+# YELLOW_ORBIT = [33, 34, 50, 65, 79, 78, 62, 47]
+# BLACK_ORBIT  = [40, 41, 57, 72, 86, 85, 69, 54]
+# SIMULATED_INITIAL_BLACK_POSITION = np.array([-2, -5])
+# SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
 # SIMULATED_INITIAL_BLACK_POSITION = np.array([-6, -5])
 # SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
 
@@ -40,8 +41,7 @@ SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
 # SIMULATED_INITIAL_YELLOW_POSITION = np.array([-6, -5])
 # SIMULATED_INITIAL_BLACK_POSITION  = np.array([1, -3])
 
-## exp 2: halting: concentric circles
-# initial condition: close to reference trajectories
+## exp 2: halting: concentric circles (initial condition: close to reference trajectories)
 # EXPERIMENT_NAME = "concentric_circles_halting"
 # YELLOW_ORBIT = [50, 51, 52, 53, 69, 85, 100, 115, 130, 145, 160, 174, 188, 187, 186, 185, 169, 153, 138, 123, 108, 93, 78, 64]
 # BLACK_ORBIT  = [96, 97, 113, 128, 142, 141, 125, 110] 
@@ -49,15 +49,20 @@ SIMULATED_INITIAL_YELLOW_POSITION  = np.array([1, -3])
 # SIMULATED_INITIAL_BLACK_POSITION  = np.array([0, 0])
 
 ## exp 3: steering: static obstacle
-# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-7, 7])
-# SIMULATED_INITIAL_BLACK_POSITION  = np.array([-7, -7])
-
-# exp 4 alt: steering: intersection dynamic obstacle
-# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-6, 1])
-# SIMULATED_INITIAL_BLACK_POSITION  = np.array([2, 5])
-# SIMULATED_INITIAL_BLACK_POSITION  = np.array([5, 4])
-# BLACK_ORBIT = [183]
+# EXPERIMENT_NAME = "static_obstacle_steering_avoidance"
+# SIMULATED_INITIAL_YELLOW_POSITION = np.array([-1, 0])
+# SIMULATED_INITIAL_BLACK_POSITION  = np.array([3, 5])
 # BLACK_ORBIT = [196]
+# YELLOW_ORBIT = [111]
+
+# exp 4 steering: intersection dynamic obstacle
+EXPERIMENT_NAME = "dynamic_obstacle_steering_avoidance"
+SIMULATED_INITIAL_YELLOW_POSITION = np.array([-2, 3])
+SIMULATED_INITIAL_BLACK_POSITION  = np.array([5, 6])
+BLACK_ORBIT = [182]
+YELLOW_ORBIT = [127]
+
+# BLACK_ORBIT = [183]
 # YELLOW_ORBIT = [156]
 
 # # exp 4: steering: x-shape dynamic obstacle
