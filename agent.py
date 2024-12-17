@@ -100,7 +100,7 @@ class Agent:
                     shortest_path = self.single_agent_shortest_path()
                     self.update_motion_plan(shortest_path[:2])              # set more steps (e.g., 4) to make transition smoother
 
-                await self.__actuate(self.input_trajectory[i])
+                # await self.__actuate(self.input_trajectory[i])
                 await self.__actuate(self.input_trajectory[i+1])
             else:
                 await self.__actuate(self.input_trajectory[i])

@@ -5,6 +5,7 @@ from constants import *
 
 class Actuator:
     def __init__(self, port, baudrate=115200, timeout=1):
+        print("init actuator")
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
         time.sleep(timeout)  # Wait for Arduino to reset
         self._clear_initial_message()  # Clear the "Command Line Terminal Ready" message
@@ -28,13 +29,22 @@ class Actuator:
         
 
     async def actuate_single(self, row, col, duration=DEFAULT_ACTUATION_DURATION, dc=DEFAULT_DUTY_CYCLE):
-        print(f"ON:  coil_id: {self.grid_to_idx(row, col)},  ({row}, {col})")
+        # print(f"ON:  coil_id: {self.grid_to_idx(row, col)},  ({row}, {col})")
         
         self.set_power(row, col, dc)
         await asyncio.sleep(duration)
         self.set_power(row, col, 0)
         
-        print(f"OFF: coil_id: {self.grid_to_idx(row, col)}, ({row}, {col})")
+        # print(f"OFF: coil_id: {self.grid_to_idx(row, col)}, ({row}, {col})")
+
+    def actuate_single_sync(self, row, col, duration=DEFAULT_ACTUATION_DURATION, dc=DEFAULT_DUTY_CYCLE):
+        # print(f"ON:  coil_id: {self.grid_to_idx(row, col)},  ({row}, {col})")
+        
+        self.set_power(row, col, dc)
+        time.sleep(duration)
+        self.set_power(row, col, 0)
+        
+        # print(f"OFF: coil_id: {self.grid_to_idx(row, col)}, ({row}, {col})")
 
     def stop_all(self):
         # print(f"stopping all coils...")

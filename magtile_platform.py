@@ -1,10 +1,15 @@
 import pdb
+import ast
 import asyncio
 import json
+import csv
+import time
 import numpy as np
 from agent import Agent
 from agent_color import AgentColor
 from constants import *
+
+CSV_FILE = '28mm_two_agents_in_water_closed_loop.csv'
 
 class CollisionException(Exception):
     def __init__(self):
@@ -25,6 +30,13 @@ class Platform:
         self.deactivated_positions = []
 
         self.ttc, self.prior_ttc = np.inf, np.inf
+
+        global csv_writer, start_time, black_ref_idx, yellow_ref_idx
+        self.start_time = time.time()
+
+        csv_file = open(CSV_FILE, mode="w", newline="")
+        self.csv_writer = csv.writer(csv_file)
+        self.csv_writer.writerow(["timestamp","yellow_ref_idx", "yellow_position_x", "yellow_position_y", "black_ref_idx", "black_position_x", "black_position_y"])
 
     def alert_if_collision(self):
         # try:
@@ -60,6 +72,15 @@ class Platform:
                     color = f"{agent.color.value}".encode('utf-8')
                     payload = json.loads(message[color].decode())
                     agent.update_position(payload)
+
+                timestamp = time.time() - self.start_time
+                yellow_position = ast.literal_eval(message[b'yellow'].decode('utf-8'))
+                black_position = ast.literal_eval(message[b'black'].decode('utf-8'))
+                yellow_ref_idx = self.yellow_agent.ref_trajectory[self.current_control_iteration]
+                black_ref_idx = self.black_agent.ref_trajectory[self.current_control_iteration]
+                
+                print(timestamp, yellow_ref_idx, yellow_position[0], yellow_position[1], black_ref_idx, black_position[0], black_position[1])
+                self.csv_writer.writerow([timestamp, yellow_ref_idx, yellow_position[0], yellow_position[1], black_ref_idx, black_position[0], black_position[1]])
 
         elif OPERATION_MODE == "SIMULATION":
             self.simulate_position_readings()
